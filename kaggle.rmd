@@ -1,0 +1,834 @@
+---
+title: "Ciencia de Datos - Proyecto Kaggle"
+author: "Gustavo Quevedo Garrán"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, out.width="50%", fig.hold='hold', message = FALSE, warning = FALSE)
+```
+
+```{r funciones, message=FALSE}
+
+library(dplyr)
+library(pander)
+resumen <- function(data, column){
+  column <- enquo(column)
+  data %>%
+    group_by(!!column) %>%
+    summarise(shot_made_flag = mean(shot_made_flag),
+              count = n()
+    ) %>%
+    pander
+}
+
+resumen_extra <- function(data, column, feature){
+  column <- enquo(column)
+  feature_name = deparse(substitute(feature))
+  feature <- enquo(feature)
+  data %>%
+    group_by(!!column) %>%
+    summarise(feature_name = mean(!!feature),
+              count = n()
+    ) %>%
+    pander
+}
+
+library(ggplot2)
+plot_efectividad <- function(data, column) {
+  var_column_name = deparse(substitute(column))
+  column <- enquo(column)
+  data %>%
+    group_by(!!column) %>%
+    summarise(Efectividad=mean(shot_made_flag)) %>%
+    ggplot(aes(x=reorder(!!column, Efectividad), y=Efectividad)) + 
+    geom_point(aes(colour=Efectividad), size=3) +
+    scale_colour_gradient(low="red", high="forestgreen") +
+    labs(title=paste("Efectividad según ", var_column_name)) +
+    theme_bw() +
+    theme(axis.title.y=element_blank(),
+          legend.position="none",
+          plot.title=element_text(hjust=0.5)) +
+    coord_flip()
+}
+
+plot_efectividad_temp <- function (data, column){
+  var_temp_name = deparse(substitute(column))
+  column <- enquo(column)
+  
+  data %>%
+    group_by(!!column) %>%
+    summarise(Efectividad=mean(shot_made_flag)) %>%
+    ggplot(aes(x=!!column, y=Efectividad, group=1)) +
+    geom_line(aes(colour=Efectividad)) +
+    geom_point(aes(colour=Efectividad), size=3) +
+    labs(title=paste("Efectividad según ", var_temp_name), x=var_temp_name) +
+    theme_bw() +
+    theme(legend.position="none",
+          axis.text.x=element_text(angle=45, hjust=1),
+          plot.title=element_text(hjust=0.5)) 
+}
+
+plot_efectividad_doble <- function (data, var_main, var_extra, var_extra_val1, var_extra_val2){
+  var_main_name = deparse(substitute(var_main))
+  var_extra_name = deparse(substitute(var_extra))
+  var_main <- enquo(var_main)
+  var_extra <- enquo(var_extra)
+  
+  var_extra_val1 <- as.character(var_extra_val1)
+  var_extra_val2 <- as.character(var_extra_val2)
+  
+  data %>%
+    group_by(!!var_main) %>%
+    summarise(val1=mean(shot_made_flag[!!var_extra==var_extra_val1]),
+              val2=mean(shot_made_flag[!!var_extra==var_extra_val2])) %>%
+    ggplot(aes(x=!!var_main, group=1)) +
+    geom_line(aes(y=val1, colour=paste(var_extra_name, " = ", var_extra_val1))) +
+    geom_line(aes(y=val2, colour=paste(var_extra_name, " = ", var_extra_val2))) +
+    geom_point(aes(y=val1, colour=paste(var_extra_name, " = ", var_extra_val1)), size=3) +
+    geom_point(aes(y=val2, colour=paste(var_extra_name, " = ", var_extra_val2)), size=3) +
+    labs(title=paste("Efectividad según ", var_main_name), x=var_main_name, 
+         subtitle=paste(var_extra_val1, " and ", var_extra_val2),
+         x=var_main_name, y="Efectividad") +
+    theme_bw() +
+    theme(legend.title=element_blank(),
+          legend.position="bottom",
+          axis.text.x=element_text(angle=45, hjust=1),
+          plot.title=element_text(hjust=0.5),
+          plot.subtitle=element_text(hjust=0.5)) 
+}
+
+plot_total <- function(data, column) {
+  var_column_name = deparse(substitute(column))
+  column <- enquo(column)
+  data %>%
+    group_by(!!column) %>% 
+    summarise(Total=sum(shot_made_flag)) %>%
+    ggplot(aes(x=reorder(!!column, Total), y=Total, group=1)) +
+    geom_line(aes(colour=Total)) +
+    geom_point(aes(colour=Total), size=3) +
+    scale_colour_gradient(low="red", high="forestgreen") +
+    labs(title=paste("Totales para ", var_column_name)) +
+    theme_bw() +
+    theme(legend.position="none",
+          axis.text.x=element_text(angle=45, hjust=1),
+          plot.title=element_text(hjust=0.5))
+}
+
+plot_total_temp <- function(data, column) {
+  var_column_name = deparse(substitute(column))
+  column <- enquo(column)
+  data %>%
+    group_by(!!column) %>% 
+    summarise(Total=sum(shot_made_flag)) %>%
+    ggplot(aes(!!column, y=Total, group=1)) +
+    geom_line(aes(colour=Total)) +
+    geom_point(aes(colour=Total), size=3) +
+    scale_colour_gradient(low="red", high="forestgreen") +
+    labs(title=paste("Totales para ", var_column_name)) +
+    theme_bw() +
+    theme(legend.position="none",
+          axis.text.x=element_text(angle=45, hjust=1),
+          plot.title=element_text(hjust=0.5))
+}
+
+
+plot_ubicacion <- function(data, column, loc_x_column, loc_y_column, title) {
+  column <- enquo(column)
+  loc_x <- enquo(loc_x_column)
+  loc_y <- enquo(loc_y_column)
+  
+  ggplot(data, aes(x=!!loc_x, y=!!-loc_y)) +
+    geom_point(aes(color=!!column), alpha=0.2) +
+    labs(title=title)
+}
+
+plot_ubicacion_error <- function(preds, loc_x, loc_y, shot_made_flag, title){
+  predsData <- data.frame("loc_x" = loc_x, "loc_y" = loc_y, "error" = shot_made_flag - preds, 1)
+  predsData <- predsData[which(predsData$error > 0.5 | predsData$error < -0.5),]
+  ggplot(predsData, aes(loc_x, loc_y)) +
+      geom_point(aes(color=error)) +
+      scale_colour_gradient(low = "black", high = "orange", na.value = NA) +
+      labs(title=title) +
+      theme(legend.position = "none") 
+}
+
+obtener_action_types_poco_comunes <- function(data){
+  return(as.data.frame(
+    group_by(data, action_type) %>% 
+      summarise(count = n()) %>% 
+      filter(count < 100))$action_type)
+}
+
+combinar_action_combined <- function(data, action_types_poco_comunes){
+  index_train <- data$action_type %in% action_types_poco_comunes
+  data$combined_action_type <- as.character(data$action_type)
+  data$combined_action_type[index_train] <- as.character(data$combined_shot_type[index_train])
+  data$combined_action_type <- factor(data$combined_action_type)
+  return(data)
+}
+
+generar_csv <- function(ids, preds, desc){
+  submission <- data.frame(shot_id=ids, shot_made_flag=preds);
+  write.csv(submission, paste(format(Sys.Date(), "%Y%m%d"), "_", desc, ".csv"), row.names = F)
+}
+
+library(fastDummies)
+dummificar <- function(data){
+  dataDummy <- dummy_cols(data, remove_selected_columns = TRUE)
+  colnames(dataDummy) <- make.names(colnames(dataDummy))
+  return (dataDummy)
+}
+
+library(MASS)
+seleccionar_variables <- function(dataDummy){
+  dataDummyLm <- lm(shot_made_flag ~ ., data = dataDummy)
+  dataDummyLmFs <- stepAIC(dataDummyLm, direction = "both", trace = 0)
+  return(dataDummyLmFs$model)
+}
+
+logLoss<-function(actual, predicted)
+{
+  predicted<-(pmax(predicted, 0.00001))
+  predicted<-(pmin(predicted, 0.99999))
+  result<- (-1/length(actual))*(sum((actual*log(predicted)+(1-actual)*log(1-predicted))))
+  return(result)
+}
+
+library(Matrix)
+library(xgboost)
+xgboost_entrenar <- function(dataMatrix, class){
+  
+  train <- xgb.DMatrix(data=dataMatrix, label=class, missing = NaN)
+  watchlist <- list(data=train)
+  
+  set.seed(1715)
+  
+  param <- list(  objective           = "binary:logistic", 
+                  booster             = "gbtree",
+                  eval_metric         = "logloss",
+                  eta                 = 0.04,
+                  max_depth           = 6,
+                  subsample           = 0.7,
+                  colsample_bytree    = 0.7
+  )
+  
+  model <- xgb.cv(  params              = param, 
+                    data                = train, 
+                    nrounds             = 1500, 
+                    verbose             = 0,
+                    watchlist           = watchlist,
+                    maximize            = FALSE,
+                    nfold               = 10,
+                    early_stopping_rounds    = 20,
+                    print_every_n       = 1
+  )
+  
+  model <- xgb.train(   params              = param, 
+                        data                = train, 
+                        nrounds             = model$best_iteration, 
+                        verbose             = 0,
+                        watchlist           = watchlist,
+                        maximize            = FALSE
+  )
+  
+  #return(predict(clf, train))
+  return(model)
+}
+  
+```
+
+## Introducción y descripción del problema
+
+Nos encontramos ante un problema en el cual se nos presentan características de **todos los lanzamientos** que Kobe Bryant realizó durante sus **20 años de carrera**. De los más de 30.000 lanzamientos, se ha **ocultado** el valor que indica si el lanzamiento entró o no en la canasta **para 5.000 de ellos** . El objetivo es **predecir** este valor para los lanzamientos en los que no se dispone de él.
+
+Para ello se realizará un completo **análisis de los datos**, comprendiendo cada una de las variables proporcionadas, sus valores y de qué manera pueden afectar a la efectividad de los lanzamientos, con el objeto de utilizar esta información de la mejor manera en la predicción. Algunas variables serán **transformadas** o **eliminadas** antes de la **creación del modelo de aprendizaje** que se utilizará en la predicción.
+
+Finalmente se creará un **fichero con la predicción** de dicho modelo, que se subirá a la plataforma **Kaggle**, la cual devolverá un valor con la **evaluación** del mismo. Esta operación se podrá repetir tras realizar ajustes en el modelo, el cual se describirá finalmente en este documento.
+
+## Comprensión y preprocesado de datos
+
+### Exploración y visualización de datos
+
+```{r Carga de bibliotecas e inicialización, message=FALSE}
+setwd("D:/UIMP/Ciencia de Datos y aprendizaje automático/prácticas/K. Proyecto Final Kaggle")
+library("data.table") #fread
+```
+
+A continuación se cargarán los datos y se analizarán las características en tres *data frames*:
+
+- **data**: Todos los registros. Útil para obtener información que no dependa del éxito del lanzamiento
+
+- **train**: Sólo registros con cuyo resultado es conocido. Se utilizará para obtener gráficos y estadísticas en las que sí intervenga el éxito del lanzamiento (efectividad) y, posteriormente, para entrenar el modelo.
+
+- **test**: Sólo registros cuyo resultado es desconocido. Se le aplicará el mismo preprocesado que a **train**.
+
+```{r Carga de datos}
+data <- as.data.frame(fread("data.csv", header = T, stringsAsFactors = T))
+#división en entrenamiento y test
+train<-subset(data, !is.na(data$shot_made_flag))
+test<-subset(data, is.na(data$shot_made_flag))
+```
+
+#### · action_type y combined_shot_type
+\hfill\break
+```{r action_type}
+#plot_efectividad(train, action_type)
+#resumen(train, combined_shot_type)
+
+plot_total(train, action_type)
+plot_efectividad(train, combined_shot_type)
+```
+
+**action_type** se trata de una variable categórica. De los distintos valores que toma, se deduce que se trata de los diferentes estilos o acciones técnicas de los lanzamientos. 
+
+**combined_shot_type** es otra variable categórica. De los distintos valores que toma y del nombre de la variable se deduce que puede combinar o agrupar valores de la variable anterior action_type.
+
+Sabemos que la efectividad varía en función de **action_type**, a la vez que hay mucha desigualdad entre la cantidad de lanzamientos realizados entre los tipos de acción (figura de arriba a la izquierda). También comprobamos que la efectividad varía en función de **combined_shot_type** (figura de arriba a la derecha).
+
+```{r}
+action_types_poco_comunes <- obtener_action_types_poco_comunes(train)
+train <- combinar_action_combined(train, action_types_poco_comunes)
+test <- combinar_action_combined(test, action_types_poco_comunes)
+
+pairs(data.frame(data$action_type, data$combined_shot_type))
+plot_efectividad(train, combined_action_type)
+
+train$action_type <- NULL
+test$action_type <- NULL
+train$combined_shot_type <- NULL
+test$combined_shot_type <- NULL
+```
+
+Podemos comprobar en el gráfico de la izquierda que las variables están totalmente **correlacionadas**.
+
+Optaremos por combinar ambas variables en una sola, de modo que los valores de **action_type** menos usados (menos de 100 repeticiones), serán sustituidos por su **combined_shot_type** asociado. **Creamos una nueva variable combined_action_type y eliminaremos las dos variables existentes**.
+
+Como vemos, nos queda una variable mucho más clara, habiendo extraído y mantenido la información más relevantes de ambas (figura de arriba a la derecha).
+
+#### · game_event_id
+\hfill\break
+```{r game_event_id}
+#data %>% group_by(period) %>% summarise("Min (game_event_id)" = min(game_event_id)) %>% pander
+```
+
+Se trata de una variable que almacena enteros. Se ha comprobado que el mínimo valor de game_event_id va aumentando en función del periodo o cuarto. Se intuye que el saque inicial sería el evento 1 y el primer tiro del partido el evento 2.
+
+No parece lógico que el orden del evento aporte información adicional respecto al tiempo restante o el periodo, por tanto **eliminamos game_event_id**
+
+```{r eliminar game_event_id}
+train$game_event_id <- NULL
+test$game_event_id <- NULL
+```
+
+#### · game_id y game_date
+\hfill\break
+**game_id** es un identificador único para el partido mientras que **game_date** es la fecha del mismo, aunque en formato cadena de caracteres. 
+
+```{r game_id y game_date correlación}
+data$game_date <- as.Date(as.character(data$game_date), format = "%Y-%m-%d")
+train$game_date <- as.Date(as.character(train$game_date), format = "%Y-%m-%d")
+test$game_date <- as.Date(as.character(test$game_date), format = "%Y-%m-%d")
+#pairs(data.frame(data$game_date, data$game_id))
+```
+
+Lo hemos convertido a formato fecha y hemos comprobado que **game_id** y **game_date** están correlacionados, aunque en algunos partidos se traslada la numeración a otro rango diferente. **Eliminamos game_id** ya que no aporta ninguna información útil.
+
+```{r eliminar game_id}
+train$game_id <- NULL
+test$game_id <- NULL
+```
+
+```{r echo=FALSE}
+train$game_month <- month(train$game_date)
+#plot_efectividad(train, game_month)
+train$game_weekday <- weekdays(train$game_date)
+#plot_efectividad(train, game_weekday)
+```
+
+¿Afecta la fecha a la efectividad en los lanzamientos? Lo hemos comprobado con las componentes mes y día de la semana y no parece que tengan gran incidencia en la efectividad. Posiblemente la componente del año sí afecte pero ésta estará obviamente muy correlacionada con la temporada (**season**) por lo que nos deshacemos de **game_date**.
+
+```{r eliminar game_date}
+train$game_month <- NULL
+train$game_weekday <- NULL
+train$game_date <- NULL
+test$game_month <- NULL
+test$game_weekday <- NULL
+test$game_date <- NULL
+
+```
+
+#### · seconds_remaining y minutes_remaining  
+\hfill\break
+Se trata de las componentes de segundos y minutos para el tiempo restante para finalizar el periodo cuando se produjo el lanzamiento. Visualizamos la efectividad según los minutos restantes 
+
+```{r echo=FALSE}
+plot_total_temp(train, minutes_remaining)
+plot_efectividad_temp(train, minutes_remaining)
+```
+
+Esta separación en dos variables no tiene sentido para nuestro modelo, ya que los valores de 0 a 59 de los segundos no se entienden sin los minutos. Combinaremos ambas en **seconds_remaining**, que computará también el tiempo de **minutes_remaining**, resultando en el total de segundos restantes. 
+
+```{r echo=FALSE}
+train$seconds_remaining <- train$minutes_remaining * 60 + train$seconds_remaining
+
+```
+
+De los gráficos anteriores se deduce que se producen muchos lanzamientos y el porcentaje baja durante el último minuto de cada cuarto. Esto posiblemente se debe a la importancia de Kobe en su equipo, que le llevó a jugarse los tiros finales decisivos, que por otro lado muchas veces fueron desesperados o muy lejanos lo que hizo bajar el nivel de acierto.
+
+Veremos esto con detalle para el último minuto.
+
+```{r echo=FALSE}
+last_min <- subset(train, seconds_remaining < 60)
+plot_total_temp(last_min, seconds_remaining)
+plot_efectividad_temp(last_min, seconds_remaining)
+```
+
+Vemos que en los **últimos tres segundos** se combinan un **alto número de lanzamientos y bajo acierto**.
+
+```{r echo=FALSE}
+train_sin_segundos_finales <- subset(train, seconds_remaining > 3)
+#plot_efectividad_temp(train_sin_segundos_finales, minutes_remaining)
+```
+
+Se ha comprobado que, sin contabilizar los lanzamientos de los últimos segundos, ya no hay tanta diferencia entre la efectividad del último minuto y el resto. Por tanto sólo vamos a distinguir entre estos segundos finales y el resto, **creando la variable last_seconds** y **deshaciéndonos tanto de minutes_remaining como de seconds_remaining**.
+
+```{r echo=FALSE}
+train$last_seconds <- train$seconds_remaining <= 3
+test$last_seconds <- test$seconds_remaining <= 3
+train$seconds_remaining <- NULL
+test$seconds_remaining <- NULL
+train$minutes_remaining <- NULL
+test$minutes_remaining <- NULL
+```
+
+#### · period  
+\hfill\break
+Se trata del valor del periodo o cuarto en el que se realizó el lanzamiento. 
+
+```{r period resumen}
+#resumen(train, period)
+```
+
+Un partido normalmente se divide en cuatro periodos por lo que es normal que el grueso de lanzamientos se produzcan dentro de los valores del 1 a 4. Si el cuarto periodo finaliza en empate entre los equipos, se disputarán nuevos periodos (prórrogas) hasta que alguno finalice sin empate. 
+
+Podemos comprobar que existe un decremento de la efectividad en el último cuarto (0.4137 frente a valores de 0.44-0.46). Esto probablemente se deba a tiros desesperados al final del partido intentando una remontada. Pasa lo mismo en el periodo 7 pero la cantidad de datos es tan baja que este caso puede ser ignorado. Por tanto **crearemos la variable last_period descartando el resto de valores de period**.
+
+```{r}
+train$last_period <- train$period == 4
+test$last_period <- test$period == 4
+train$period <- NULL
+test$period <- NULL
+```
+
+#### · season y playoffs  
+\hfill\break
+**season** indica la temporada mientras que **playoffs** indica si se trata de partido de eliminatorias finales por el título. 
+
+```{r}
+#resumen_efectividad(train, season)
+#plot_efectividad(train, season)
+plot_efectividad_temp(train, season)
+
+#resumen(train, playoffs)
+plot_efectividad_doble(train, season, playoffs, 0, 1)
+
+# levels(train$playoffs) <- c(FALSE,TRUE)
+# train$playoffs <- as.logical(train$playoffs)
+# test$playoffs <- as.logical(est$playoffs)
+train$playoffs <- NULL
+test$playoffs <- NULL
+```
+
+Vemos que los porcentajes varían bastante en función de la temporada (**season**) mientras que, excepto en sus dos primeras temporadas, el hecho de que el partido sea de **playoff** no influye demasiado.
+
+Eliminaremos la variable **playofs**. Para los cálculos nos dará más información el ordinal de la temporada, en lugar del valor de **season**. Ya que la primera temporada fue la 1996, restaremos 1995 de los primeros cuatro dígitos de season y la borramos.
+
+```{r}
+train$season_ord <- as.numeric(substr(train$season, 0, 4)) - 1995
+test$season_ord <- as.numeric(substr(test$season, 0, 4)) - 1995
+train$season <- NULL
+test$season <- NULL
+
+#Esto prueba que la mayor distancia de tiro ha influído en la caída de la efectividad al final de su carrera
+#resumen_extra(train, season_ord, shot_real_distance)
+```
+
+#### · shot_distance  
+\hfill\break
+
+```{r}
+train$shot_real_distance <- sqrt((train$loc_x / 10)**2 + (train$loc_y / 10)**2)
+test$shot_real_distance <- sqrt((test$loc_x / 10)**2 + (test$loc_y / 10)**2)
+```
+
+Al tener las coordenadas del tiro podemos calcular la distancia real y almacenarlo en **shot_real_distance**. **shot_distance** no es más la distancia real truncada.
+
+```{r}
+plot_efectividad_temp(train, shot_distance)
+plot_total_temp(train, shot_distance)
+```
+
+En los dos gráficos anteriores vemos cómo la efectividad y el número de lanzamientos **baja notablemente a partir de una distancia de 40**. Por tanto, por simplificación, fijaremos la distancia en 40 para todos los tiros más lejanos de 40 y nos quedaremos con shot_real_distance que aporta más información para los cálculos.
+
+```{r}
+train$shot_real_distance[train$shot_real_distance > 40] <- 40
+test$shot_real_distance[test$shot_real_distance > 40] <- 40
+train$shot_distance <- NULL
+test$shot_distance <- NULL
+```
+
+#### · shot_made_flag  
+\hfill\break
+Se trata de la variable clase que hemos de predecir y la que estamos usando para obtener todas las estadísticas de efectividad para los datos de entrenamiento.
+
+#### · shot_type  
+\hfill\break
+Indica si se trata de lanzamientos de 2 o 3 puntos. Vemos que los lanzamientos de tiro libre (1 punto) no han sido incluidos en el conjunto de datos.
+
+```{r}
+#resumen(train, shot_type)
+plot_efectividad_doble(train, season_ord, shot_type, "2PT Field Goal", "3PT Field Goal")
+pairs(data.frame(train$shot_type, train$shot_real_distance))
+```
+
+En la figura de la izquierda vemos la efectividad en función de **shot_type** por temporada.
+
+En baloncesto, la diferencia entre tiros de 2 y 3 puntos solo depende de la distancia. El gráfico de la derecha nos confirma que **shot_type está 100% correlacionada con la distancia** (además de mostrarnos algunos **valores erróneos** para esta variable). Eliminamos la variable.
+
+```{r}
+train$shot_type <- NULL
+test$shot_type <- NULL
+```
+
+#### · shot_zone_area y shot_zone_basic  
+\hfill\break
+```{r}
+plot_ubicacion(train, shot_zone_area, loc_x, loc_y, "Lanzamientos según shot_zone_area")
+plot_ubicacion(train, shot_zone_basic, loc_x, loc_y, "Lanzamientos según shot_zone_basic")
+```
+
+Se trata de dos variables que nos indican la zona desde la que se ha realizado el lanzamiento. Como vemos en los gráficos, aportan cierta información adicional con respecto a la distancia como si es un lanzamiento desde el lado izquierdo o el derecho, o si estaba dentro de la zona (paint) que tiene unas reglas especiales.
+
+#### · shot_zone_range  
+\hfill\break
+```{r}
+plot_ubicacion(train, shot_zone_range, loc_x, loc_y, "Lanzamientos según shot_zone_range")
+pairs(data.frame(data$shot_zone_range, data$shot_distance))
+```
+
+Por lo que se observa en el gráfico de la izquierda, los valores de **shot_zone_range** son solo una discretización de la distancia. En la figura de la derecha lo confirmamos al ver que está correlacionada con **shot_real_distance**, por lo que **no necesitaremos shot_zone_range**.
+
+```{r}
+train$shot_zone_range <- NULL
+test$shot_zone_range <- NULL
+```
+
+#### · lon/lat y loc_x/loc_y  
+\hfill\break
+Para mostrar gráficas de las dos secciones anteriores se ha utilizado la ubicación proporcionada por las variables loc_x/loc_y. Vamos a comprobar ahora los lanzamientos según **shot_zone_area** utilizando las variables lon/lat.
+
+```{r}
+plot_ubicacion(data, shot_zone_area, lon, lat, "Lanzamientos según shot_zone_area (lon/lat)")
+pairs(data.frame(data$loc_x, data$loc_y, data$lon, data$lat))
+```
+
+Vemos en el gráfico de la izquierda que la disposición es la misma que cuando utilizamos loc_x/loc_y, aunque los valores no parecen ser relativos a la cancha. En la figura de la derecha confirmamos que los pares lon/loc_x y lat/loc_y están correlacionados
+
+Si hubiera que quedarse con uno de los pares loc_x/loc_y sería el elegido por incluir valores relativos a la pista. Sin embargo, finalmente **se decidió eliminar tanto loc_x/loc_y como lon/lat** ya que con la distancia de tiro y las diferentes variables categóricas shot_zone tenemos cubierta esta información de manera más simple aunque las guardaremos aparte para posteriores gráficos
+
+```{r}
+train.loc_x <- train$loc_x
+train.loc_y <- train$loc_y
+train$loc_x <- NULL
+train$loc_y <- NULL
+test$loc_x <- NULL
+test$loc_y <- NULL
+train$lon <- NULL
+train$lat <- NULL
+test$lon <- NULL
+test$lat <- NULL
+
+```
+
+#### · team_id y team_name  
+\hfill\break
+Esta variables solo indican el equipo al que pertenecía Kobe cuando realizó los lanzamientos. En nuestro caso no aporta ningún valor, pero su presencia se puede deber a que el conjunto de datos fue extraído de un conjunto mayor en el que se encontraban todos los lanzamientos de todos los jugadores. Comprobado que es el mismo valor para todas las instancias, **quitamos las variables team_id y team_name** .
+
+```{r}
+train$team_id <- NULL
+train$team_name <- NULL
+test$team_id <- NULL
+test$team_name <- NULL
+```
+
+#### · matchup y opponent  
+\hfill\break
+```{r}
+#resumen(train, matchup)
+#resumen(train, opponent)
+
+#plot_efectividad(train, matchup)
+```
+
+**opponent** incluye una abreviatura del rival y **matchup** un texto que además informa sobre la cancha del partido. Utilizamos, por tanto, **matchup** para averiguar si es **local o visitante**.
+
+Nota: Durante las comprobaciones comprobamos que hay 33 valores distintos en opponent y 74 en matchup. Debería haber el doble o menos en matchup (casa y visitante) lo que implica algún error en los prefijos utilizados.
+
+```{r}
+#https://stackoverflow.com/questions/10128617/test-if-characters-are-in-a-string
+train$home_game <- grepl('@', train$matchup, fixed = TRUE) == FALSE
+test$home_game <- grepl('@', test$matchup, fixed = TRUE) == FALSE
+```
+
+```{r}
+plot_efectividad(train, opponent)
+plot_efectividad(train, home_game)
+train$matchup <- NULL
+test$matchup <- NULL
+```
+
+Vemos que es la efectividad sube levemente para los partidos de casa (**home_game == TRUE**).
+Sin embargo, **ignoraremos opponent** ya que, aunque el rival parece tener cierta incidencia, los equipos cambian mucho de una temporada a otra y las predicciones en base a esto pueden ser erróneas.
+
+```{r}
+train$opponent <- NULL
+test$opponent <- NULL
+```
+
+#### · shot_id  
+\hfill\break
+```{r}
+#head(data$shot_id, 100)
+```
+
+Se trata de un índice para los lanzamientos con lo que no tendrá incidencia alguna en el acierto del tiro. **Lo eliminamos** ya que no lo necesitamos para el entrenamiento
+
+```{r}
+train$shot_id <- NULL
+test.id <- test$shot_id;
+test$shot_id <- NULL
+```
+
+### Resumen tras el preprocesamiento basado en la exploración
+
+La dimensionalidad del conjunto de datos se ha visto reducida considerablemente tras todo el proceso anterior. 
+
+Vemos a continuación las variables iniciales del conjunto de datos: 
+
+```{r}
+colnames(data)
+```
+
+Y éstas son las variables tras el análisis y posterior transformación de los datos basados en la misma.
+
+```{r}
+colnames(train)
+```
+
+Algunas de los operaciones realizadas han sido:
+
+#### Estudio de correlaciones
+
+Se han detectado correlaciones entre los siguientes pares de variables: 
+
+- **action_type** <-> **combined_shot_type**
+- **game_date** <-> **game_id**
+- **shot_type** <-> **shot_distance**
+- **shot_zone_range** <-> **shot_distance**
+- **loc_x/loc_y** <-> **lon/lat**
+
+#### Discretizaciones u otras transformaciones
+
+- Algunas de las que se podrían proponer ya venían incluídas en el conjunto de datos, como (**shot_type** > **shot_zone_range** > **shot_distance**) o (**combined_shot_type** > **action_type**). 
+- En cuanto al **periodo** y **tiempo restante** se ha optado por distinguir entre el último periodo o los últimos segundos, ya que es donde se apreció diferencia sustancial en la efectividad. 
+- Se ha realizado una normalización en la temporada (**season**) sustituyendo el año por el ordinal de la temporada en la carrera de Kobe.
+    
+#### Construcción de variables
+
+- Se ha obtenido la distancia real (**shot_real_distance**) a partir de la posición de tiro, y si los Lakers jugaban en casa (**home_game**) a partir de *matchup*.
+- Finalmente, se han combinado valores de **combined_shot_type** y **action_type** para formar **combined_action_type** 
+
+#### Procesado de variables categóricas (Dummificación)
+
+Algunos métodos de aprendizaje requieren valores numéricos en lugar de variables categóricas (factor). Este es el caso de los algoritmos de **regresión logística**. Otros no lo requieren y existen bibiliotecas como caret que parecen realizar este proceso de manera implícita, en lo que se conoce como *one-hot encoding*. Sea como fuere, esta transformación no representa pérdida de información, ni añade complejidad computacional por lo que procedemos a *dummificar* o codificar las variables categóricas con la biblioteca **fastDummies**. De este modo se sustituirán por una columnas que contendrá solo ceros y unos para cada uno de los valores posibles de estas variables categóricas.
+
+```{r}
+#dummificación
+trainDummy <- dummificar(train)
+testDummy <- dummificar(test)
+```
+
+#### Selección horizonal y/o vertical
+
+Además de la supresión de variables predictoras realizada en los puntos anteriores, utilizaremos métodos computacionales para tratar de lograr el conjunto de variable más óptimo que nos sea posible. Para ello se hará uso de la biblioteca **MASS** y las funciones **lm** y **stepAIC**. Alguno de los métodos de aprendizaje que se utilizará a continuación como Random Forest (parámetro *importance*) incluye esta selección de variables de manera implícita pero no será así para todos ellos, por lo que realizaremos este proceso con antelación.
+
+```{r}
+#selección de variables
+trainFinal <- seleccionar_variables(trainDummy)
+testFinal <- testDummy[colnames(trainFinal)]
+```
+
+Finalmente, **quitaremos de nuestros conjuntos de entrenamiento y test la variable clase shot_made_flag**, la cual almacenaremos en una variable independiente para poder posteriormente entrenar nuestro modelo y evaluar su comportamiento.
+
+```{r}
+#quitar variable clase de data frames y almacenar en variable independiente
+train.shot_made_flag <- train$shot_made_flag
+train$shot_made_flag <- NULL
+test$shot_made_flag <- NULL
+trainFinal$shot_made_flag <- NULL
+testFinal$shot_made_flag <- NULL
+```
+
+## Modelado y Evaluación
+
+Debido a que la métrica utilizada en kaggle para evaluar nuestro modelo es LogLoss, se utilizarán modelos de clasificación probabilística. De esta manera se evitará enviar valores 0 o 1, ya que en esta métrica la penalización es muy severa cuando el error en la predicción es total en lugar de parcial, como será en las predicciones con estas técnicas.
+
+Los métodos utilizados serán los siguientes: **LDA (Análisis discriminante lineal), Regresión logística, Random Forest y XGBoost**.
+
+
+```{r}
+########
+# lda
+########
+#creación modelo LDA
+modelLda <- lda(train.shot_made_flag ~ ., trainFinal)
+
+#predecir variable clase en datos de entrenamiento
+predLdaTrain <- predict(modelLda, trainFinal)
+predLdaTrain <- predLdaTrain$posterior[,2]
+
+#calcular el log loss de la predicción
+logLossLda <- logLoss(train.shot_made_flag, predLdaTrain)
+
+#predLdaTest <- predict(modelLda, testFinal)
+#predLdaTest <- predLdaTest$posterior[,2]
+
+#generar CSV para Kaggle
+#generar_csv(test.id, predLdaTest, "lda")
+
+######################
+## Regresión logística
+######################
+modelGlm <- glm(train.shot_made_flag ~.,data=trainFinal)
+
+#predecir variable clase en datos de entrenamiento
+predGlmTrain <- predict(modelGlm, trainFinal)
+
+#calcular el log loss de la predicción
+logLossGlm <- logLoss(train.shot_made_flag, predGlmTrain)
+
+#predecir variable clase en datos de test
+#predGlmTest <- predict(modelGlm, testFinal)
+
+#generar CSV para Kaggle
+#generar_csv(test.id, predGlmTest, "glm")
+
+###############
+## RandomForest
+###############
+
+#https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#ooberr
+#En random forest no hay necesidad de hacer cross validation
+
+#creación modelo RandomForest
+library(randomForest)
+modelRf <- randomForest(train.shot_made_flag ~ ., trainFinal, importance = TRUE, replace = TRUE)
+
+#predecir variable clase en datos de entrenamiento
+predRfTrain <- predict(modelRf, trainFinal)
+
+#calcular el log loss de la predicción
+logLossRf <- logLoss(train.shot_made_flag, predRfTrain)
+
+#predecir variable clase en datos de test
+#predRfTest <- predict(modelRf, testFinal)
+
+#generar CSV para Kaggle
+#generar_csv(test.id, predRfTest, "rf")
+
+###############
+## XGBoost
+###############
+#creación modelo XGBoost
+trainMatrix <- data.matrix(trainFinal)
+modelXgb <- xgboost_entrenar(trainMatrix, train.shot_made_flag)
+
+#predecir variable clase en datos de entrenamiento
+predXgbTrain <- predict(modelXgb, trainMatrix)
+
+#calcular el log loss de la predicción
+logLossXgb <- logLoss(train.shot_made_flag, predXgbTrain)
+
+#predecir variable clase en datos de test
+#testMatrix <- data.matrix(testFinal);
+#predXgbTest <- predict(modelXgb, testMatrix);
+
+#generar CSV para Kaggle
+#generar_csv(test.id, predXgbTest, "xgboost")
+```
+
+Desde un principio, se comprobó que con LDA y regresión logística los resultados eran levemente menos satisfactorios que con Random Forest y XGBoost. Por tanto se incidió más en el ajuste de parámetros para los dos últimos. Mediante el uso de la función LogLoss aportada en el enunciado del problema, se obtuvieron los siguientes resultados para la métrica **LogLoss** en la evaluación de **nuestros modelos** con los **datos de entrenamiento**:
+
+```{r}
+print(paste("LDA                : ", logLossLda))
+print(paste("Regresión logística: ", logLossGlm))
+print(paste("Random Forest      : ", logLossRf))
+print(paste("XGBoost            : ", logLossXgb))
+```
+
+Por lo tanto, centrándonos en Random Forest y XGBoost, intentaremos visualizar en los gráficos siguientes dónde se produjeron los **errores más importantes** de nuestra predicción. 
+
+```{r}
+plot_ubicacion_error(predRfTrain, train.loc_x, train.loc_y, train.shot_made_flag, "Errores en Random Forest")
+plot_ubicacion_error(predXgbTrain, train.loc_x, train.loc_y, train.shot_made_flag, "Errores en XGBoost")
+```
+
+Solo se han renderizado puntos en los que el fallo en la predicción ha sido superior a 0.5:
+
+- En los puntos de color **naranja**, se **predijo** un porcentaje **inferior al 50%** de canasta y el lanzamiento fue **exitoso**
+- En los puntos de color **negro**, se **predijo** un porcentaje **superior al 50%** de canasta y el lanzamiento fue **fallido**
+
+Se pueden extraer varias **conclusiones** de estos gráficos:
+
+- Hay **más errores** en el modelo de **XGBoost**, lo cual no es sorprendente ya que el resultado de su evaluación fue peor.
+- Hay **más errores de lanzamientos que se predijeron como fallo** y finalmente terminaron en canasta (naranja) que el caso contrario (negro).
+- La mayoría de lanzamientos predichos como exitosos que fueron **fallados** (negro) se encuentran **bajo la canasta**. Esto posiblemente se debe a **tapones recibidos**, los cuales son imposibles de predecir con el conjunto de datos utilizado.
+
+## Conclusiones
+
+El proyecto se ha realizado durante las **tres primeras semanas de mayo**. Se han dedicado un total de **50 horas** a su realización.
+
+La sensación al comienzo del proyecto fue de que eran demasiados aspectos nuevos que aprender y poner en práctica y el alumno se sintió en cierto modo **sobrepasado.** Sin embargo, los comentarios en el **foro** de la asignatura y la documentación aportada por otros usuarios en *kaggle* mediante los *notebooks* publicados fue de gran ayuda para ir progresando en los diferentes pasos requeridos en el proyecto.
+
+El **análisis exploratorio**, la **creación de gráficos** y la **documentación** son los aspectos que han requerido de **mayor esfuerzo**. 
+
+Por otro lado, se podría haber empleado más tiempo en búsqueda de otros métodos de aprendizaje o en parametrizar de una manera óptima los finalmente utilizados, así como en el apartado de evaluación, en el cual se visualizan gráficamente los errores pero no se han podido detectar soluciones.
+
+La documentación ha sido realizada mediante **RMarkdown**, lo cual ha resultado un acierto y será sin duda el formato a utilizar en futuros proyectos similares. Es cierto que la generación del documento final requiere de varios minutos una vez incluye todo el contenido. Sin embargo, la integración de comentarios, gráficos, código y salida por pantalla en la generación del documento desde cero lo hacen el formato perfecto para un proyecto como este.
+
+El **código fuente** del proyecto se incluye dentro del fichero de RMarkdown. [Está disponible en este enlace](https://github.com/gustavoquevedo/uimp/kaggle.rmd).
+
+## Resultado en Kaggle
+
+Finalmente **se presenta para este proyecto el resultado del modelo creado con XGBoost**. Esto es debido a que se trata del modelo que mejor puntuación (*score* más bajo) ha obtenido en kaggle, lo cual es de algún modo sorprendente ya que el modelo de Random Forest obtenía mejores resultados en nuestra evaluación. Estos han sido los resultados de los diferentes modelos:
+
+- **LDA**: 0.61797
+- **Regresión logística**: 0.61583
+- **Random Forest**: 0.60663
+- **XGBoost**: 0.60511
+
+El usuario utilizado para cargar las predicciones es **gustavoquevedo** y a continuación se pueden ver una captura de pantalla con el *score* final obtenido:
+
+```{r echo=FALSE, out.width = '100%'}
+knitr::include_graphics("kaggle_screenshot_tiny.jpg")
+````
+
+## Referencias
+
+- [Creación modelo de regresión logística. Utilizado para el uso de la función glm](https://www.r-bloggers.com/how-to-perform-a-logistic-regression-in-r/)
+- [Explicación de por qué la clasificación probabilística es mejor para mejorar el LogLoss](https://datawookie.netlify.app/blog/2015/12/making-sense-of-logarithmic-loss/)
+- [Notebooks en la competición Kobe Bryant Shot Selection. Se han observado y sacado ideas en general de varios de ellos](https://www.kaggle.com/c/kobe-bryant-shot-selection/notebooks)
+- [Notebook con un modelo creado en XGBoost, en el que se basó la solución propuesta](https://www.kaggle.com/brandao/xgboost-in-r-kobe-bryant-benchmark)
