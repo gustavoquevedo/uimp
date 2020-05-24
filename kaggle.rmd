@@ -809,7 +809,7 @@ Por otro lado, se podría haber empleado más tiempo en búsqueda de otros méto
 
 La documentación ha sido realizada mediante **RMarkdown**, lo cual ha resultado un acierto y será sin duda el formato a utilizar en futuros proyectos similares. Es cierto que la generación del documento final requiere de varios minutos una vez incluye todo el contenido. Sin embargo, la integración de comentarios, gráficos, código y salida por pantalla en la generación del documento desde cero lo hacen el formato perfecto para un proyecto como este.
 
-El **código fuente** del proyecto se incluye dentro del fichero de RMarkdown. [Está disponible en este enlace](https://github.com/gustavoquevedo/uimp/kaggle.rmd).
+El **código fuente** del proyecto se incluye dentro del fichero de RMarkdown. Está **disponible aquí**: [enlace 1](https://github.com/gustavoquevedo/uimp/blob/master/kaggle.rmd) y [enlace 2](https://raw.githubusercontent.com/gustavoquevedo/uimp/master/kaggle.rmd).
 
 ## Resultado en Kaggle
 
@@ -820,7 +820,7 @@ Finalmente **se presenta para este proyecto el resultado del modelo creado con X
 - **Random Forest**: 0.60663
 - **XGBoost**: 0.60511
 
-El usuario utilizado para cargar las predicciones es **gustavoquevedo** y a continuación se pueden ver una captura de pantalla con el *score* final obtenido:
+El usuario utilizado es **gustavoquevedo** y a continuación se pueden ver una captura de pantalla con el *score* final obtenido:
 
 ```{r echo=FALSE, out.width = '100%'}
 knitr::include_graphics("kaggle_screenshot_tiny.jpg")
