@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ConsoleApp1
+namespace EvalDataStreams1
 {
     class Program
     {
         private const string Filename = "numbers.txt";
         private static Random rnd1 = new Random();
         private static Random rnd2 = new Random();
+        private static Stopwatch sw = new Stopwatch();
 
         private static int N = 1000;
 
@@ -19,39 +19,20 @@ namespace ConsoleApp1
         {
             var sequence = GenerateSequence();
             WriteRandomSequenceFile(sequence);
+            var numbers = ReadFile();
 
-            FindMissingNumber();
+            GetMissingNumber(numbers, GFG.GetMissingNo1);
+            GetMissingNumber(numbers, GFG.GetMissingNo2);
+            GetMissingNumber(numbers, GFG.GetMissingNo3);
+            GetMissingNumber(numbers, GFG.GetMissingNo4);
         }
 
-        private static void FindMissingNumber()
+        private static void GetMissingNumber(int[] numbers, Func<int[], int, int> getMissingNumber)
         {
-            String line;
-            try
-            {
-                //Pass the file path and file name to the StreamReader constructor
-                var sr = new StreamReader(Filename);
-                //Read the first line of text
-                line = sr.ReadLine();
-                //Continue to read until you reach end of file
-                while (line != null)
-                {
-                    //write the lie to console window
-                    Console.WriteLine(line);
-                    //Read the next line
-                    line = sr.ReadLine();
-                }
-                //close the file
-                sr.Close();
-                Console.ReadLine();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Exception: " + e.Message);
-            }
-            finally
-            {
-                Console.WriteLine("Executing finally block.");
-            }
+            sw.Restart();
+            var missingNumber = getMissingNumber(numbers, N);
+            sw.Stop();
+            Console.WriteLine("Número={0}, Tiempo={1}", missingNumber, sw.Elapsed);
         }
 
         private static IEnumerable<int> GenerateSequence()
@@ -67,6 +48,20 @@ namespace ConsoleApp1
                 }
             }
             return Shuffle(intArray.ToList());
+        }
+
+        public static IEnumerable<T> Shuffle<T>(IList<T> list)
+        {
+            int n = list.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = rnd1.Next(n + 1);
+                T value = list[k];
+                list[k] = list[n];
+                list[n] = value;
+            }
+            return list;
         }
 
         private static void WriteRandomSequenceFile(IEnumerable<int> sequence)
@@ -93,18 +88,21 @@ namespace ConsoleApp1
             }
         }
 
-        public static IEnumerable<T> Shuffle<T>(IList<T> list)
+        private static int[] ReadFile()
         {
-            int n = list.Count;
-            while (n > 1)
+            var numbers = new List<int>();
+            //Pass the file path and file name to the StreamReader constructor
+            var sr = new StreamReader(Filename);
+            //Read the first line of text
+            var line = sr.ReadLine();
+            //Continue to read until you reach end of file
+            while (line != null)
             {
-                n--;
-                int k = rnd1.Next(n + 1);
-                T value = list[k];
-                list[k] = list[n];
-                list[n] = value;
+                numbers.Add(int.Parse(sr.ReadLine()));
             }
-            return list;
+            //close the file
+            sr.Close();
+            return numbers.ToArray();
         }
     }
 }
