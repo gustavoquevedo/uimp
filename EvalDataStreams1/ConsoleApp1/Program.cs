@@ -13,34 +13,42 @@ namespace EvalDataStreams1
         private static Random rnd2 = new Random();
         private static Stopwatch sw = new Stopwatch();
 
-        private static int N = 1000;
+        private static int N = 10;
 
         static void Main(string[] args)
         {
-            var sequence = GenerateSequence();
-            WriteRandomSequenceFile(sequence);
-            var numbers = ReadFile();
+            int[] nValues = { 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000, 10000000, 50000000, 100000000 };
+            foreach(var n in nValues)
+            {
+                N = n;
+                var sequence = GenerateSequence();
 
-            GetMissingNumber(numbers, GFG.GetMissingNo1);
-            GetMissingNumber(numbers, GFG.GetMissingNo2);
-            GetMissingNumber(numbers, GFG.GetMissingNo3);
-            GetMissingNumber(numbers, GFG.GetMissingNo4);
+                //WriteRandomSequenceFile(sequence);
+
+                //var numbers = ReadFile();
+                var numbers = sequence.ToArray();
+
+                //GetMissingNumber(numbers, GFG.GetMissingNo1);
+                GetMissingNumber(numbers, GFG.GetMissingNo2);
+                GetMissingNumber(numbers, GFG.GetMissingNo3);
+            }
         }
 
         private static void GetMissingNumber(int[] numbers, Func<int[], int, int> getMissingNumber)
         {
             sw.Restart();
-            var missingNumber = getMissingNumber(numbers, N);
+            var missingNumber = getMissingNumber(numbers, N - 1);
             sw.Stop();
-            Console.WriteLine("Número={0}, Tiempo={1}", missingNumber, sw.Elapsed);
+            Console.WriteLine("N={0}, Número={1}, Tiempo={2}, Función={3}", N, missingNumber, sw.Elapsed, getMissingNumber.Method.Name);
         }
 
         private static IEnumerable<int> GenerateSequence()
         {
             var missingNumber = rnd2.Next(N);
+            missingNumber++;
             var intArray = new int[N - 1];
             var counter = 0;
-            for (int i = 0; i < N; i++)
+            for (int i = 1; i < (N + 1); i++)
             {
                 if (missingNumber != i)
                 {
@@ -98,7 +106,8 @@ namespace EvalDataStreams1
             //Continue to read until you reach end of file
             while (line != null)
             {
-                numbers.Add(int.Parse(sr.ReadLine()));
+                numbers.Add(int.Parse(line));
+                line = sr.ReadLine();
             }
             //close the file
             sr.Close();

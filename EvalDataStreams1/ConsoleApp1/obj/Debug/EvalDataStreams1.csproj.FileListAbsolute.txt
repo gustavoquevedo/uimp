@@ -5,3 +5,10 @@ D:\git\uimp\EvalDataStreams1\ConsoleApp1\bin\Debug\ConsoleApp1.exe
 D:\git\uimp\EvalDataStreams1\ConsoleApp1\bin\Debug\ConsoleApp1.pdb
 D:\git\uimp\EvalDataStreams1\ConsoleApp1\obj\Debug\ConsoleApp1.exe
 D:\git\uimp\EvalDataStreams1\ConsoleApp1\obj\Debug\ConsoleApp1.pdb
+D:\UIMP\git\uimp\EvalDataStreams1\ConsoleApp1\bin\Debug\ConsoleApp1.exe.config
+D:\UIMP\git\uimp\EvalDataStreams1\ConsoleApp1\bin\Debug\ConsoleApp1.exe
+D:\UIMP\git\uimp\EvalDataStreams1\ConsoleApp1\bin\Debug\ConsoleApp1.pdb
+D:\UIMP\git\uimp\EvalDataStreams1\ConsoleApp1\obj\Debug\EvalDataStreams1.csprojAssemblyReference.cache
+D:\UIMP\git\uimp\EvalDataStreams1\ConsoleApp1\obj\Debug\EvalDataStreams1.csproj.CoreCompileInputs.cache
+D:\UIMP\git\uimp\EvalDataStreams1\ConsoleApp1\obj\Debug\ConsoleApp1.exe
+D:\UIMP\git\uimp\EvalDataStreams1\ConsoleApp1\obj\Debug\ConsoleApp1.pdb
