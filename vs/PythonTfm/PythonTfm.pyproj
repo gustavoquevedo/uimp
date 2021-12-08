@@ -1,0 +1,51 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>1e228afe-1992-49c2-9ad3-9b388463bf01</ProjectGuid>
+    <ProjectHome>
+    </ProjectHome>
+    <StartupFile>SVM\SvmTrain.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>PythonTfm</Name>
+    <RootNamespace>PythonKaggle</RootNamespace>
+    <InterpreterId>
+    </InterpreterId>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="__init__.py" />
+    <Compile Include="CommonHelper.py" />
+    <Compile Include="FastText\FastTextTrain.py" />
+    <Compile Include="More\PythonKaggle - Rasa.py" />
+    <Compile Include="More\PythonKaggle - MLP.py" />
+    <Compile Include="FastText\FastTextHelper.py" />
+    <Compile Include="SVM\SvmHelper.py" />
+    <Compile Include="SVM\SvmTrain.py" />
+    <Compile Include="More\PythonKaggle.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="More\" />
+    <Folder Include="FastText\" />
+    <Folder Include="SVM\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>
