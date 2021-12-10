@@ -1,4 +1,3 @@
-from typing_extensions import IntVar
 import fasttext
 from urllib.request import urlopen
 import json

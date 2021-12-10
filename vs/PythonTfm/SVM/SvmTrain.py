@@ -56,37 +56,41 @@ structure = [
 
     #     Corpus.loc[index,'text_final'] = str(Final_words)
 
-def run(dataset_name, df_train, df_test, print_recall):
+def get_model(df_train, label_encoder, tfidf_vect):
 
     #Set Random seed
     np.random.seed(500)
 
     df_train.columns = ['text', 'label']
-    df_test.columns = ['text', 'label']
 
     # Step - 2: Split the model into Train and Test Data set
     #Train_X, Test_X, Train_Y, Test_Y = model_selection.train_test_split(Corpus['text_final'],Corpus['label'],test_size=0.3)
     train_x = df_train['text']
-    test_x = df_test['text']
     train_y = df_train['label']
-    test_y = df_test['label']
         
     # Step - 3: Label encode the target variable  - This is done to transform Categorical data of string type in the data set into numerical values
-    label_encoder = LabelEncoder()
     train_y_encoded = label_encoder.fit_transform(np.array(train_y))
-    test_y_encoded = label_encoder.fit_transform(np.array(test_y))
-
-    # Step - 4: Vectorize the words by using TF-IDF Vectorizer - This is done to find how important a word in document is in comaprison to the corpus
-    tfidf_vect = TfidfVectorizer(max_features=5000)
-    tfidf_vect.fit(np.array(train_x))
 
     train_x_tfidf = tfidf_vect.transform(train_x)
-    test_x_tfidf = tfidf_vect.transform(test_x)
     
     # Classifier - Algorithm - SVM
     # fit the training dataset on the classifier
     model = svm.SVC(C=1.0, kernel='linear', degree=3, gamma='auto')
     model.fit(train_x_tfidf,train_y_encoded)
+    return model
+
+def get_tfidf_vect(train_x, max_features):
+    tfidf_vect = TfidfVectorizer(max_features=5000)
+    tfidf_vect.fit(np.array(train_x))
+    return tfidf_vect
+
+def predict(model, df_test, print_recall, label_encoder, dataset_name, tfidf_vect):    
+    df_test.columns = ['text', 'label']
+    test_x = df_test['text']
+    test_y = df_test['label']
+
+    test_x_tfidf = tfidf_vect.transform(test_x)
+    test_y_encoded = label_encoder.fit_transform(np.array(test_y))
 
     # predict the labels on validation dataset
     predictions_svm = model.predict(test_x_tfidf)
@@ -95,7 +99,7 @@ def run(dataset_name, df_train, df_test, print_recall):
     # Use accuracy_score function to get the accuracy
     print('\r\n' + dataset_name)
     if print_recall:
-      recall = recall_score(Test_Y, predictions_svm_decoded, average=None, labels=['oos'])
+      recall = recall_score(test_y, predictions_svm_decoded, average=None, labels=['oos'])
       print("Out-Of-Scope Recall -> ",recall*100)
     else:
       print("SVM Accuracy Score -> ",accuracy_score(predictions_svm, test_y_encoded)*100)
@@ -121,10 +125,19 @@ for item in structure:
         df_test_oos = helper.read_remote_json_as_dataframe(item[0], 'test', True)
         df_test = pd.concat([df_test_in, df_test_oos])
 
-    df_train_val_in = pd.concat([df_train_in, df_val_in])
-    df_train_val = pd.concat([df_train, df_val])
+        #df_train_val_in = pd.concat([df_train_in, df_val_in])
+        #df_train_val = pd.concat([df_train, df_val])
+        
+        label_encoder = LabelEncoder()
+        tfidf_vect = get_tfidf_vect(df_train[0], 5000)
 
-    run(item[0] + ", train only", df_train_in, df_test_in, False)
-    run(item[0] + ", train + val", df_train_val_in, df_test_in, False)
-    run(item[0] + ", train only", df_train, df_test, True)
-    run(item[0] + ", train + val", df_train_val, df_test, True)
+        model_in = get_model(df_train_in, label_encoder, tfidf_vect)
+        predict(model_in, df_test_in, False, label_encoder, item[0] + ", train only", tfidf_vect)
+
+        model = get_model(df_train, label_encoder, tfidf_vect)
+        predict(model, df_test, True, label_encoder, item[0] + ", train only", tfidf_vect)
+    else:
+        df_train_all = df_train_in
+        df_val_all = df_val_in
+        df_test_all = df_test_in
+        #...
