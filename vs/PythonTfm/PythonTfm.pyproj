@@ -25,7 +25,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="__init__.py" />
-    <Compile Include="CommonHelper.py" />
     <Compile Include="FastText\FastTextTrain.py" />
     <Compile Include="More\PythonKaggle - Rasa.py" />
     <Compile Include="More\PythonKaggle - MLP.py" />
