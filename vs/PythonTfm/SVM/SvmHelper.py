@@ -33,5 +33,5 @@ class Svm_helper:
 
     def get_label_or_oos(self, text, data_json):
         item = next((x[1] for x in data_json if x[0] == text), None)
-        return item if item is not None else 'oos'
-        
+        return item if item is not None else 'oos'        
+    
