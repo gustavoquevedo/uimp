@@ -5,7 +5,7 @@
     <ProjectGuid>1e228afe-1992-49c2-9ad3-9b388463bf01</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>SVM\SvmTrain.py</StartupFile>
+    <StartupFile>Bert\BertTextTrain.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -24,6 +24,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Bert\BertTextTrain.py" />
     <Compile Include="__init__.py" />
     <Compile Include="FastText\FastTextTrain.py" />
     <Compile Include="More\PythonKaggle - Rasa.py" />
@@ -36,6 +37,7 @@
   <ItemGroup>
     <Folder Include="More\" />
     <Folder Include="FastText\" />
+    <Folder Include="Bert\" />
     <Folder Include="SVM\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
